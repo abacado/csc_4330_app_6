@@ -1,0 +1,481 @@
+import 'package:material_ui/material_ui.dart';
+
+import '../models/hobby.dart';
+import '../models/listing.dart';
+import '../models/post.dart';
+
+/// Placeholder content until there is a backend. Keep the shapes here in
+/// sync with the models so swapping in real data is a drop-in change.
+abstract final class MockData {
+  static const hobbies = <Hobby>[
+    Hobby(
+      id: 'climbing',
+      name: 'Rock climbing',
+      tagline: 'Ropes, routes, and good falls',
+      icon: Icons.terrain_outlined,
+      tint: Color(0xFFB8643F),
+      basics: [
+        GuideStep(
+          'Start indoors',
+          'A climbing gym rents shoes and harnesses, and staff will check your knots. Book an intro session before buying anything.',
+        ),
+        GuideStep(
+          'Learn the figure-eight',
+          'The figure-eight follow-through is how you tie into the rope. Practice until you can tie and check it without thinking.',
+        ),
+        GuideStep(
+          'Climb with your legs',
+          'Beginners pull with their arms and burn out fast. Keep your arms straight and push up through your feet.',
+        ),
+        GuideStep(
+          'Fall on purpose',
+          'Take small, controlled falls on top rope so falling stops feeling scary. Managing fear is half the sport.',
+        ),
+      ],
+    ),
+    Hobby(
+      id: 'crochet',
+      name: 'Crochet',
+      tagline: 'Hooks, yarn, and a lot of patience',
+      icon: Icons.gesture_rounded,
+      tint: Color(0xFFB0577A),
+      basics: [
+        GuideStep(
+          'Pick a forgiving yarn',
+          'Medium-weight (worsted) yarn in a light color makes stitches easy to see. Avoid fuzzy or black yarn at first.',
+        ),
+        GuideStep(
+          'Make a slip knot and chain',
+          'Every project starts with a foundation chain. Aim for even tension rather than speed.',
+        ),
+        GuideStep(
+          'Learn single crochet',
+          'Single crochet is the building block for most patterns. Work a small square until the edges stay straight.',
+        ),
+        GuideStep(
+          'Read a simple pattern',
+          'Patterns use abbreviations like ch, sc, and dc. Start with a dishcloth or scarf pattern labeled "easy".',
+        ),
+      ],
+    ),
+    Hobby(
+      id: 'film',
+      name: 'Film photography',
+      tagline: 'Thirty-six frames at a time',
+      icon: Icons.camera_alt_outlined,
+      tint: Color(0xFF4F6A85),
+      basics: [
+        GuideStep(
+          'Choose a forgiving camera',
+          'A point-and-shoot or an SLR with a working light meter handles exposure while you learn composition.',
+        ),
+        GuideStep(
+          'Load ISO 400 film',
+          'ISO 400 color negative film handles sun and shade alike, and it tolerates exposure mistakes.',
+        ),
+        GuideStep(
+          'Learn the exposure triangle',
+          'Aperture, shutter speed, and ISO trade off against each other. Change one and you have to balance another.',
+        ),
+        GuideStep(
+          'Keep a shot log',
+          'Write down the settings for each frame. When the scans come back you will see exactly what worked.',
+        ),
+      ],
+    ),
+    Hobby(
+      id: 'sourdough',
+      name: 'Sourdough',
+      tagline: 'Flour, water, salt, and time',
+      icon: Icons.bakery_dining_outlined,
+      tint: Color(0xFFC08A2E),
+      basics: [
+        GuideStep(
+          'Raise a starter',
+          'Mix flour and water daily for a week or two until it reliably doubles within a few hours of feeding.',
+        ),
+        GuideStep(
+          'Weigh everything',
+          'A kitchen scale matters more than any other tool. Bread recipes are written as ratios by weight.',
+        ),
+        GuideStep(
+          'Learn stretch and folds',
+          'Instead of kneading, fold the dough over itself every 30 minutes to build strength.',
+        ),
+        GuideStep(
+          'Bake in a Dutch oven',
+          'A lidded pot traps steam, which gives the loaf its rise and crackly crust.',
+        ),
+      ],
+    ),
+    Hobby(
+      id: 'woodworking',
+      name: 'Woodworking',
+      tagline: 'Measure twice, cut once',
+      icon: Icons.carpenter_outlined,
+      tint: Color(0xFF8A6A4A),
+      basics: [
+        GuideStep(
+          'Safety gear first',
+          'Eye and ear protection come before any tool. Learn how each tool can hurt you before you switch it on.',
+        ),
+        GuideStep(
+          'Start with hand tools',
+          'A saw, a chisel, and a block plane teach you how wood behaves, and they cost less than power tools.',
+        ),
+        GuideStep(
+          'Read the grain',
+          'Planing with the grain leaves a smooth surface. Planing against it tears the fibers out.',
+        ),
+        GuideStep(
+          'Build a simple box',
+          'A box teaches measuring, square cuts, and joinery. Every mistake shows, which makes it a good teacher.',
+        ),
+      ],
+    ),
+    Hobby(
+      id: 'gardening',
+      name: 'Gardening',
+      tagline: 'Dirt under the fingernails',
+      icon: Icons.yard_outlined,
+      tint: Color(0xFF4E7A4F),
+      basics: [
+        GuideStep(
+          'Watch your light',
+          'Track how many hours of direct sun each spot gets. Most vegetables want six or more.',
+        ),
+        GuideStep(
+          'Build healthy soil',
+          'Mix compost into your beds every season. Good soil prevents most problems before they start.',
+        ),
+        GuideStep(
+          'Start with easy crops',
+          'Herbs, lettuce, radishes, and bush beans grow fast and forgive mistakes.',
+        ),
+        GuideStep(
+          'Water deeply, less often',
+          'A deep soak a few times a week grows deeper roots than a daily sprinkle.',
+        ),
+      ],
+    ),
+    Hobby(
+      id: 'guitar',
+      name: 'Guitar',
+      tagline: 'Calluses come with the territory',
+      icon: Icons.music_note_outlined,
+      tint: Color(0xFF6B5288),
+      basics: [
+        GuideStep(
+          'Tune before every session',
+          'Use a clip-on tuner or an app. Practicing out of tune trains your ear the wrong way.',
+        ),
+        GuideStep(
+          'Learn five open chords',
+          'G, C, D, E minor, and A minor cover thousands of songs. Practice switching between pairs.',
+        ),
+        GuideStep(
+          'Practice a little every day',
+          'Fifteen focused minutes a day beats a two-hour session once a week.',
+        ),
+        GuideStep(
+          'Play songs early',
+          'Pick a simple song you love and learn it badly. Motivation matters more than perfect technique.',
+        ),
+      ],
+    ),
+    Hobby(
+      id: 'running',
+      name: 'Running',
+      tagline: 'One more mile',
+      icon: Icons.directions_run_rounded,
+      tint: Color(0xFF3F7C80),
+      basics: [
+        GuideStep(
+          'Run slower than you think',
+          'Most of your runs should be at a pace where you can hold a conversation.',
+        ),
+        GuideStep(
+          'Get fitted for shoes',
+          'A running store can watch your stride and suggest shoes that suit it.',
+        ),
+        GuideStep(
+          'Add distance gradually',
+          'Raise your weekly distance by about ten percent at most to avoid injury.',
+        ),
+        GuideStep(
+          'Rest is training',
+          'Muscles adapt on rest days. Take at least one or two each week.',
+        ),
+      ],
+    ),
+  ];
+
+  static Hobby hobbyById(String id) => hobbies.firstWhere((h) => h.id == id);
+
+  static DateTime _ago({int hours = 0, int days = 0}) =>
+      DateTime.now().subtract(Duration(hours: hours, days: days));
+
+  static final posts = <Post>[
+    Post(
+      id: 'p1',
+      hobbyId: 'climbing',
+      authorName: 'Maya R.',
+      authorLevel: SkillLevel.beginner,
+      title: 'How tight should climbing shoes be?',
+      body: 'Rented a pair today and my toes were curled. Is that normal for a first pair, or should I size up?',
+      replyCount: 0,
+      isQuestion: true,
+      postedAt: _ago(hours: 2),
+    ),
+    Post(
+      id: 'p2',
+      hobbyId: 'climbing',
+      authorName: 'Jon K.',
+      authorLevel: SkillLevel.pro,
+      title: 'Notes from a weekend at Red River Gorge',
+      body: 'Ran a few classic 5.10s. Notes on approach times and where the shade is after noon, if anyone is heading out.',
+      replyCount: 7,
+      isQuestion: false,
+      postedAt: _ago(hours: 20),
+    ),
+    Post(
+      id: 'p3',
+      hobbyId: 'climbing',
+      authorName: 'Priya S.',
+      authorLevel: SkillLevel.intermediate,
+      title: 'Is a lead belay class worth it?',
+      body: 'My gym offers a two-session lead course. Did anyone take one before climbing outside?',
+      replyCount: 3,
+      isQuestion: true,
+      postedAt: _ago(days: 1, hours: 6),
+    ),
+    Post(
+      id: 'p4',
+      hobbyId: 'crochet',
+      authorName: 'Ellie W.',
+      authorLevel: SkillLevel.beginner,
+      title: 'My squares keep turning into trapezoids',
+      body: 'The edges get wider every row. I think I am adding stitches, but I cannot tell where.',
+      replyCount: 0,
+      isQuestion: true,
+      postedAt: _ago(hours: 1),
+    ),
+    Post(
+      id: 'p5',
+      hobbyId: 'crochet',
+      authorName: 'Rosa M.',
+      authorLevel: SkillLevel.pro,
+      title: 'Free pattern: chunky market tote',
+      body: 'Wrote up the tote I sell at the farmers market. Works up in an afternoon with bulky cotton.',
+      replyCount: 12,
+      isQuestion: false,
+      postedAt: _ago(hours: 9),
+    ),
+    Post(
+      id: 'p6',
+      hobbyId: 'film',
+      authorName: 'Theo L.',
+      authorLevel: SkillLevel.intermediate,
+      title: 'Portra 400 or Gold 200 for portraits?',
+      body: 'Shooting a friend\'s graduation next month. Torn between budget and skin tones.',
+      replyCount: 5,
+      isQuestion: true,
+      postedAt: _ago(hours: 5),
+    ),
+    Post(
+      id: 'p7',
+      hobbyId: 'film',
+      authorName: 'Ana P.',
+      authorLevel: SkillLevel.advanced,
+      title: 'A home scanning setup that finally works',
+      body: 'Camera scanning with a light pad and a macro lens. It beats lab prices after about twenty rolls.',
+      replyCount: 4,
+      isQuestion: false,
+      postedAt: _ago(days: 2, hours: 2),
+    ),
+    Post(
+      id: 'p8',
+      hobbyId: 'sourdough',
+      authorName: 'Sam T.',
+      authorLevel: SkillLevel.beginner,
+      title: 'Starter smells like nail polish',
+      body: 'Day six and it smells sharp. Did I kill it?',
+      replyCount: 0,
+      isQuestion: true,
+      postedAt: _ago(hours: 3),
+    ),
+    Post(
+      id: 'p9',
+      hobbyId: 'sourdough',
+      authorName: 'Grace H.',
+      authorLevel: SkillLevel.pro,
+      title: 'Crumb shot: 80% hydration country loaf',
+      body: 'Long cold retard, 16 hours. Happy to share the schedule if anyone wants it.',
+      replyCount: 9,
+      isQuestion: false,
+      postedAt: _ago(days: 1, hours: 2),
+    ),
+    Post(
+      id: 'p10',
+      hobbyId: 'woodworking',
+      authorName: 'Dev N.',
+      authorLevel: SkillLevel.beginner,
+      title: 'Which first chisel set?',
+      body: 'Budget is about \$60. Is it better to buy a cheap set or one good chisel?',
+      replyCount: 2,
+      isQuestion: true,
+      postedAt: _ago(hours: 12),
+    ),
+    Post(
+      id: 'p11',
+      hobbyId: 'gardening',
+      authorName: 'Lena O.',
+      authorLevel: SkillLevel.intermediate,
+      title: 'Tomatoes splitting after rain',
+      body: 'After every heavy rain half my tomatoes crack. Anything to do besides picking early?',
+      replyCount: 0,
+      isQuestion: true,
+      postedAt: _ago(hours: 7),
+    ),
+    Post(
+      id: 'p12',
+      hobbyId: 'guitar',
+      authorName: 'Marcus B.',
+      authorLevel: SkillLevel.beginner,
+      title: 'Fingertips still sore after week one',
+      body: 'Is it normal to still hurt after a week of 20-minute sessions?',
+      replyCount: 6,
+      isQuestion: true,
+      postedAt: _ago(hours: 15),
+    ),
+    Post(
+      id: 'p13',
+      hobbyId: 'running',
+      authorName: 'Kira J.',
+      authorLevel: SkillLevel.advanced,
+      title: 'Fall half marathon training group',
+      body: 'Starting a 10-week plan in November. Easy Saturday long runs, all paces welcome.',
+      replyCount: 8,
+      isQuestion: false,
+      postedAt: _ago(days: 1, hours: 16),
+    ),
+  ];
+
+  static final listings = <Listing>[
+    Listing(
+      id: 'l1',
+      hobbyId: 'crochet',
+      title: 'Bamboo hook set, 9 sizes',
+      description: 'Upgraded to ergonomic hooks. Comes in a roll-up case with every size from 2.25 to 6 mm.',
+      type: ListingType.sale,
+      price: 18,
+      sellerName: 'Rosa M.',
+      sellerLevel: SkillLevel.pro,
+      condition: 'Like new',
+      postedAt: _ago(hours: 4),
+    ),
+    Listing(
+      id: 'l2',
+      hobbyId: 'climbing',
+      title: 'La Sportiva Tarantulace, size 41',
+      description: 'Resoled once with plenty of life left. Looking to trade for a 42 in anything aggressive.',
+      type: ListingType.trade,
+      sellerName: 'Jon K.',
+      sellerLevel: SkillLevel.pro,
+      condition: 'Good',
+      postedAt: _ago(hours: 10),
+    ),
+    Listing(
+      id: 'l3',
+      hobbyId: 'film',
+      title: 'Canon AE-1 with 50mm f/1.8',
+      description: 'Shutter and meter tested with a roll last month. Light seals replaced. Minor brassing on the top plate.',
+      type: ListingType.sale,
+      price: 165,
+      sellerName: 'Ana P.',
+      sellerLevel: SkillLevel.advanced,
+      condition: 'Good',
+      postedAt: _ago(days: 1),
+    ),
+    Listing(
+      id: 'l4',
+      hobbyId: 'sourdough',
+      title: 'Ten-year-old starter',
+      description: 'Bring a clean jar and I will give you 50 g. Happy to walk you through the first feeding.',
+      type: ListingType.free,
+      sellerName: 'Grace H.',
+      sellerLevel: SkillLevel.pro,
+      condition: 'Live culture',
+      postedAt: _ago(hours: 6),
+    ),
+    Listing(
+      id: 'l5',
+      hobbyId: 'woodworking',
+      title: 'Japanese pull saw (ryoba)',
+      description: 'Happy to lend it for a weekend project. Rip teeth on one edge, crosscut on the other.',
+      type: ListingType.lend,
+      sellerName: 'Walt G.',
+      sellerLevel: SkillLevel.pro,
+      condition: 'Good',
+      postedAt: _ago(days: 2),
+    ),
+    Listing(
+      id: 'l6',
+      hobbyId: 'climbing',
+      title: 'Bouldering crash pad',
+      description: 'Borrow it for a bouldering trip. Just bring it back dry.',
+      type: ListingType.lend,
+      sellerName: 'Priya S.',
+      sellerLevel: SkillLevel.intermediate,
+      condition: 'Good',
+      postedAt: _ago(days: 3),
+    ),
+    Listing(
+      id: 'l7',
+      hobbyId: 'gardening',
+      title: 'Heirloom tomato seedlings',
+      description:
+          'Brandywine and Sun Gold, about twenty extra. Pick up from my porch.',
+      type: ListingType.free,
+      sellerName: 'Lena O.',
+      sellerLevel: SkillLevel.intermediate,
+      condition: 'Live plants',
+      postedAt: _ago(hours: 8),
+    ),
+    Listing(
+      id: 'l8',
+      hobbyId: 'guitar',
+      title: 'Yamaha FG800 acoustic',
+      description: 'A great first guitar. Includes a gig bag and a spare set of strings.',
+      type: ListingType.sale,
+      price: 140,
+      sellerName: 'Owen C.',
+      sellerLevel: SkillLevel.advanced,
+      condition: 'Like new',
+      postedAt: _ago(days: 2, hours: 5),
+    ),
+    Listing(
+      id: 'l9',
+      hobbyId: 'crochet',
+      title: 'Worsted cotton yarn bundle',
+      description: 'Twelve skeins in mixed colors. Would trade for a set of ergonomic hooks.',
+      type: ListingType.trade,
+      sellerName: 'Ellie W.',
+      sellerLevel: SkillLevel.beginner,
+      condition: 'New',
+      postedAt: _ago(days: 1, hours: 3),
+    ),
+    Listing(
+      id: 'l10',
+      hobbyId: 'running',
+      title: 'GPS watch (Forerunner 55)',
+      description: 'Battery still lasts about a week. Charger included.',
+      type: ListingType.sale,
+      price: 90,
+      sellerName: 'Kira J.',
+      sellerLevel: SkillLevel.advanced,
+      condition: 'Good',
+      postedAt: _ago(days: 4),
+    ),
+  ];
+}
