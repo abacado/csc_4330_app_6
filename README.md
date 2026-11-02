@@ -25,6 +25,25 @@ Notes:
 - The fonts (Fraunces, DM Sans) come from `google_fonts` and download on first launch, so that launch needs internet.
 - **Windows desktop** builds require Windows **Developer Mode** (for plugin symlinks). Android, iOS, and web builds don't.
 
+## Automated builds
+
+GitHub Actions runs `.github/workflows/build.yml` on every push and pull request.
+You can also start it from **Actions → Automated build → Run workflow**.
+It uses Flutter 3.47.2 (Dart 3.13.2) and Java 17, installs the locked dependencies,
+runs `flutter analyze` and `flutter test`, then builds a release Android APK and
+a release web app. A failed check or test stops the build.
+
+To download a successful build, open **Actions → Automated build**, select the
+run, and scroll to **Artifacts**:
+
+- **skill-sprout-android** contains `app-release.apk` for Android testing.
+- **skill-sprout-web** contains the web files to serve with a web server.
+
+Downloads are kept for 14 days. The APK currently uses the project's debug
+signing key; store publishing requires a separate release signing configuration.
+This workflow builds the app; it does not deploy it or publish it to an app store.
+When upgrading Flutter, update the version in the workflow along with the project.
+
 ## Project structure
 
 ```
