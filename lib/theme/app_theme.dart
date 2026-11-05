@@ -1,50 +1,57 @@
 import 'package:animations/animations.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Warm paper background, deep green ink, clay accent for mentor/pro states.
+/// Dark forest surfaces, warm ivory type, and fresh sprout accents.
 abstract final class AppColors {
-  static const paper = Color(0xFFF6F3EC);
-  static const surface = Color(0xFFFFFDF9);
-  static const sunken = Color(0xFFECE7DC);
-  static const line = Color(0xFFE2DCCF);
-  static const ink = Color(0xFF1D2A22);
-  static const inkMuted = Color(0xFF6A7469);
-  static const moss = Color(0xFF2F5D45);
-  static const mossSoft = Color(0xFFDCE7DD);
-  static const clay = Color(0xFFB85C38);
-  static const claySoft = Color(0xFFF4E2D7);
+  static const paper = Color(0xFF0D1511);
+  static const surface = Color(0xFF18271F);
+  static const sunken = Color(0xFF24382B);
+  static const line = Color(0xFF354738);
+  static const ink = Color(0xFFF0EDE2);
+  static const inkMuted = Color(0xFFB4C0AE);
+  static const moss = Color(0xFFC3DB87);
+  static const mossSoft = Color(0xFF2A3E29);
+  static const clay = Color(0xFFC18F6C);
+  static const claySoft = Color(0xFF3E2B21);
 }
 
 abstract final class AppRadius {
-  static const sm = 10.0;
-  static const md = 14.0;
-  static const lg = 18.0;
+  static const sm = 2.0;
+  static const md = 4.0;
+  static const lg = 6.0;
 }
 
 abstract final class AppTheme {
   static ThemeData light() {
-    final scheme = ColorScheme.fromSeed(seedColor: AppColors.moss).copyWith(
-      primary: AppColors.moss,
-      onPrimary: Colors.white,
-      secondary: AppColors.clay,
-      onSecondary: Colors.white,
-      surface: AppColors.paper,
-      onSurface: AppColors.ink,
-      onSurfaceVariant: AppColors.inkMuted,
-      outline: AppColors.line,
-      outlineVariant: AppColors.line,
-      surfaceContainerLowest: AppColors.surface,
-      surfaceContainerLow: AppColors.surface,
-      surfaceContainer: AppColors.surface,
-      surfaceContainerHigh: AppColors.surface,
-      surfaceContainerHighest: AppColors.sunken,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: AppColors.moss,
+          brightness: Brightness.dark,
+        ).copyWith(
+          primary: AppColors.moss,
+          onPrimary: AppColors.paper,
+          secondary: AppColors.clay,
+          onSecondary: AppColors.paper,
+          surface: AppColors.paper,
+          onSurface: AppColors.ink,
+          onSurfaceVariant: AppColors.inkMuted,
+          outline: AppColors.line,
+          outlineVariant: AppColors.line,
+          surfaceContainerLowest: AppColors.surface,
+          surfaceContainerLow: AppColors.surface,
+          surfaceContainer: AppColors.surface,
+          surfaceContainerHigh: AppColors.surface,
+          surfaceContainerHighest: AppColors.sunken,
+        );
     final base = ThemeData(useMaterial3: true, colorScheme: scheme);
-    final body = GoogleFonts.dmSansTextTheme(base.textTheme)
-        .apply(bodyColor: AppColors.ink, displayColor: AppColors.ink);
+    final body = base.textTheme.apply(
+      fontFamily: 'DMSans',
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    );
 
-    TextStyle display(double size) => GoogleFonts.fraunces(
+    TextStyle display(double size) => TextStyle(
+      fontFamily: 'Fraunces',
       fontSize: size,
       fontWeight: FontWeight.w600,
       height: 1.12,
@@ -100,6 +107,13 @@ abstract final class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: AppColors.paper,
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.surface,
+        indicatorColor: AppColors.mossSoft,
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(3),
+        ),
+      ),
       canvasColor: AppColors.paper,
       textTheme: text,
       splashFactory: InkRipple.splashFactory,
@@ -137,7 +151,7 @@ abstract final class AppTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
           backgroundColor: AppColors.moss,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.paper,
           disabledBackgroundColor: AppColors.sunken,
           disabledForegroundColor: AppColors.inkMuted,
           textStyle: text.labelLarge,
@@ -186,7 +200,7 @@ abstract final class AppTheme {
         showDragHandle: true,
         dragHandleColor: AppColors.line,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
         ),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(

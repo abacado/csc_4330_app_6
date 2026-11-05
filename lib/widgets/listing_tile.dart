@@ -34,16 +34,7 @@ class ListingThumb extends StatelessWidget {
       child: Container(
         width: width,
         height: height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              tint.withValues(alpha: 0.24),
-              tint.withValues(alpha: 0.08),
-            ],
-          ),
-        ),
+        decoration: BoxDecoration(color: tint.withValues(alpha: 0.16)),
         child: CustomPaint(
           painter: _DotGridPainter(tint.withValues(alpha: 0.16)),
           child: Center(

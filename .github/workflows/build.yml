@@ -17,6 +17,9 @@ jobs:
     name: Check, test, and build
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
     steps:
       - name: Check out source
         uses: actions/checkout@v6
@@ -44,7 +47,12 @@ jobs:
         run: flutter test
 
       - name: Build Android APK
-        run: flutter build apk --release --no-pub
+        run: |
+          if { [ -n "$SUPABASE_URL" ] && [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; } || { [ -z "$SUPABASE_URL" ] && [ -n "$SUPABASE_PUBLISHABLE_KEY" ]; }; then
+            echo "Set both Supabase variables or leave both empty for the local demo."
+            exit 1
+          fi
+          flutter build apk --release --no-pub --dart-define="SUPABASE_URL=$SUPABASE_URL" --dart-define="SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY"
 
       - name: Save Android APK
         uses: actions/upload-artifact@v7
@@ -55,7 +63,7 @@ jobs:
           retention-days: 14
 
       - name: Build web app
-        run: flutter build web --release --no-pub
+        run: flutter build web --release --no-pub --dart-define="SUPABASE_URL=$SUPABASE_URL" --dart-define="SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY"
 
       - name: Save web build
         uses: actions/upload-artifact@v7

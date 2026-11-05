@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Skill Sprout: local demo",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": ["--web-port=5173"]
+    },
+    {
+      "name": "Skill Sprout: Supabase",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--web-port=5173",
+        "--dart-define-from-file=supabase.local.json"
+      ]
+    }
+  ]
+}
