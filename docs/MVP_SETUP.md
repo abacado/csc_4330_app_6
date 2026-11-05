@@ -133,6 +133,25 @@ With neither set, builds use the local demo. Partial configuration fails CI.
 Pull requests from forks build the local demo because repository variables
 may be unavailable. Tests always use an isolated in-memory demo store.
 
+## Publish the browser app with GitHub Pages
+
+1. In repository Settings > Pages > Build and deployment, set Source to
+   **GitHub Actions**, not Deploy from a branch. Publishing the repository root
+   renders README.md instead of running Flutter.
+2. Add both Supabase repository variables as described above.
+3. Push main. Actions > Automated build must finish both the build job and
+   **Publish web app to GitHub Pages**. Pull requests never deploy.
+4. Open https://abacado.github.io/csc_4330_app_6/ after deployment completes.
+5. In Supabase Authentication > URL Configuration, change Site URL to
+   `https://abacado.github.io/csc_4330_app_6/` and add that address to Redirect
+   URLs. Keep `http://localhost:5173/**` in Redirect URLs for local development.
+
+The workflow deploys only `build/web`, built with `/csc_4330_app_6/` as its base
+path so scripts and assets load from the repository subdirectory. Without
+Supabase variables, the published site is still the local-demo version.
+If you still see the README, confirm the Pages source and successful deployment,
+then refresh with Ctrl+Shift+R.
+
 ## Team handoff
 
 - Person 1: profiles and a people directory; use `profiles` and Supabase Auth.

@@ -63,4 +63,6 @@ use the existing test signing configuration, not store release signing.
 Repository variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` connect built
 apps to your hosted project. Leave both empty for local-demo builds. Never use
 secret/service-role keys. These workflows create downloads; they do not publish
-the app or host the Supabase backend. See the setup guide for details.
+the Android app or host the Supabase backend. On main, the workflow also deploys
+the built web app to GitHub Pages once Settings > Pages > Source is set to
+GitHub Actions. See the setup guide for details.
