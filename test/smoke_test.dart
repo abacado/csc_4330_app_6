@@ -56,16 +56,19 @@ void main() {
       await tester.runAsync(() => capturePreview(tester, 'welcome'));
       await tester.enterText(find.byType(TextFormField).first, 'Abigail');
       await tester.ensureVisible(find.text('Enter demo'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Enter demo'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Communities'));
+      await tester.tap(find.byTooltip('Communities'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Crochet').first);
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Join community'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Join community'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('New post'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('New post'));
       await tester.pumpAndSettle();
       await tester.enterText(
@@ -77,18 +80,21 @@ void main() {
         'Would love some feedback!',
       );
       await tester.ensureVisible(find.text('Publish post'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Publish post'));
       await tester.pumpAndSettle();
       expect(store.posts.first['title'], 'My first scarf');
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Profile'));
+      await tester.tap(find.byTooltip('Profile'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Switch demo member'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Switch demo member'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextFormField).first, 'Jordan');
       await tester.ensureVisible(find.text('Enter demo'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Enter demo'));
       await tester.pumpAndSettle();
       // Join as the second member; neither identity nor membership leaks.
@@ -104,6 +110,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).last, 'Love the colors!');
       await tester.ensureVisible(find.text('Send reply'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Send reply'));
       await tester.pumpAndSettle();
       expect(find.text('Love the colors!'), findsOneWidget);
