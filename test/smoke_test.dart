@@ -58,7 +58,7 @@ void main() {
       await tester.ensureVisible(find.text('Enter demo'));
       await tester.tap(find.text('Enter demo'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Communities'));
+      await tester.tap(find.byTooltip('Communities'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Crochet').first);
       await tester.pumpAndSettle();
@@ -82,7 +82,7 @@ void main() {
       expect(store.posts.first['title'], 'My first scarf');
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Profile'));
+      await tester.tap(find.byTooltip('Profile'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Switch demo member'));
       await tester.tap(find.text('Switch demo member'));
