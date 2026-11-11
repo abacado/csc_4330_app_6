@@ -4,7 +4,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../data/community_style.dart';
 import '../data/mock_data.dart';
+import '../models/hobby.dart';
 
 typedef RecordData = Map<String, dynamic>;
 
@@ -22,6 +24,9 @@ class CommunityStore extends ChangeNotifier {
   List<RecordData> posts = [];
   List<RecordData> comments = [];
   List<RecordData> memberships = [];
+
+  /// Communities started by members. The built-in ones live in MockData.
+  List<RecordData> communities = [];
   bool get signedIn => userId != null;
   RecordData get profile => profiles.firstWhere(
     (p) => p['id'] == userId,
@@ -41,6 +46,47 @@ class CommunityStore extends ChangeNotifier {
   List<RecordData> replies(String postId) =>
       comments.where((c) => c['post_id'] == postId).toList();
 
+  /// Built-in communities followed by member-started ones.
+  List<Hobby> get hobbies => [
+    ...MockData.hobbies,
+    for (final row in communities) _hobbyFrom(row),
+  ];
+
+  Hobby hobbyFor(String id) => hobbies.firstWhere(
+    (h) => h.id == id,
+    orElse: () => Hobby(
+      id: id,
+      name: 'Community',
+      tagline: '',
+      icon: communityIcon(null),
+      tint: communityTint(communityTints.first),
+      basics: const [],
+    ),
+  );
+
+  Hobby _hobbyFrom(RecordData row) => Hobby(
+    id: row['id'] as String,
+    name: row['name'] as String,
+    tagline: (row['tagline'] as String?) ?? '',
+    icon: communityIcon(row['icon'] as String?),
+    tint: communityTint((row['tint'] as num?)?.toInt() ?? communityTints.first),
+    basics: const [],
+  );
+
+  RecordData? communityRow(String id) {
+    for (final row in communities) {
+      if (row['id'] == id) return row;
+    }
+    return null;
+  }
+
+  /// Who started a member-made community, or null for a built-in one.
+  String? creatorOf(String hobbyId) =>
+      communityRow(hobbyId)?['created_by'] as String?;
+
+  bool canEdit(String hobbyId) =>
+      signedIn && creatorOf(hobbyId) != null && creatorOf(hobbyId) == userId;
+
   Future<void> initialize() async {
     if (isCloud) {
       userId = client!.auth.currentUser?.id;
@@ -55,6 +101,9 @@ class CommunityStore extends ChangeNotifier {
         posts = _rows(data['posts']);
         comments = _rows(data['comments']);
         memberships = _rows(data['memberships']);
+        communities = data['communities'] == null
+            ? []
+            : _rows(data['communities']);
       } else {
         _seed();
       }
@@ -118,6 +167,7 @@ class CommunityStore extends ChangeNotifier {
           'posts': posts,
           'comments': comments,
           'memberships': memberships,
+          'communities': communities,
         }),
       );
     }
@@ -174,11 +224,16 @@ class CommunityStore extends ChangeNotifier {
             .limit(100),
         client!.from('community_comments').select().order('created_at'),
         client!.from('memberships').select().eq('user_id', userId!),
+        client!.from('hobbies').select().order('created_at'),
       ]);
       profiles = _rows(result[0]);
       posts = _rows(result[1]);
       comments = _rows(result[2]);
       memberships = _rows(result[3]);
+      final builtIn = {for (final h in MockData.hobbies) h.id};
+      communities = _rows(
+        result[4],
+      ).where((row) => !builtIn.contains(row['id'])).toList();
     }
     notifyListeners();
   }
@@ -189,7 +244,7 @@ class CommunityStore extends ChangeNotifier {
 
   Future<void> join(String hobbyId, bool value) async {
     _requireUser();
-    if (!MockData.hobbies.any((h) => h.id == hobbyId)) {
+    if (!hobbies.any((h) => h.id == hobbyId)) {
       throw ArgumentError('Unknown hobby');
     }
     if (isCloud) {
@@ -304,7 +359,104 @@ class CommunityStore extends ChangeNotifier {
       posts = [];
       comments = [];
       memberships = [];
+      communities = [];
     }
     notifyListeners();
+  }
+
+  // -------------------------------------------------------------------------
+  // Member-started communities
+  // -------------------------------------------------------------------------
+
+  RecordData _checkCommunity(
+    String name,
+    String tagline,
+    String icon,
+    int tint, {
+    String? editing,
+  }) {
+    final cleanName = name.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final cleanTagline = tagline.trim();
+    if (cleanName.length < 2 || cleanName.length > 40) {
+      throw ArgumentError('Give the community a name of 2 to 40 characters.');
+    }
+    if (cleanTagline.isEmpty || cleanTagline.length > 80) {
+      throw ArgumentError('Add a tagline of up to 80 characters.');
+    }
+    if (!communityIcons.containsKey(icon) || !communityTints.contains(tint)) {
+      throw ArgumentError('Pick an icon and a colour.');
+    }
+    final taken = hobbies.any(
+      (h) => h.id != editing && h.name.toLowerCase() == cleanName.toLowerCase(),
+    );
+    if (taken) {
+      throw ArgumentError('A community called "$cleanName" already exists.');
+    }
+    return {
+      'name': cleanName,
+      'tagline': cleanTagline,
+      'icon': icon,
+      'tint': tint,
+    };
+  }
+
+  String _newCommunityId(String name) {
+    var slug = name
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    if (slug.length > 30) slug = slug.substring(0, 30);
+    if (slug.isEmpty) slug = 'community';
+    final suffix = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    return '$slug-$suffix';
+  }
+
+  /// Starts a community, makes the creator its first member, and returns it.
+  Future<Hobby> createCommunity({
+    required String name,
+    required String tagline,
+    required String icon,
+    required int tint,
+  }) async {
+    _requireUser();
+    final data = {
+      ..._checkCommunity(name, tagline, icon, tint),
+      'id': _newCommunityId(name),
+      'created_by': userId,
+    };
+    if (isCloud) {
+      communities.add(
+        await client!.from('hobbies').insert(data).select().single(),
+      );
+    } else {
+      communities.add({
+        ...data,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    }
+    final id = data['id'] as String;
+    await join(id, true);
+    return hobbyFor(id);
+  }
+
+  /// Lets a community's creator change its name, tagline, icon and colour.
+  Future<void> updateCommunity(
+    String hobbyId, {
+    required String name,
+    required String tagline,
+    required String icon,
+    required int tint,
+  }) async {
+    _requireUser();
+    final row = communityRow(hobbyId);
+    if (row == null || row['created_by'] != userId) {
+      throw StateError('Only the person who started this community can edit it.');
+    }
+    final data = _checkCommunity(name, tagline, icon, tint, editing: hobbyId);
+    if (isCloud) {
+      await client!.from('hobbies').update(data).eq('id', hobbyId);
+    }
+    row.addAll(data);
+    await _save();
   }
 }

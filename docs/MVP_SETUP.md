@@ -39,6 +39,9 @@ for reference but are not linked into the community MVP.
 2. In SQL Editor, create a new query, paste the entire contents of
    `supabase/migrations/202611040001_community_mvp.sql`, and run it once.
    Use a new project: this migration intentionally does not replace existing tables.
+   Then run `supabase/migrations/202611110001_member_communities.sql` the same
+   way, once. It lets members start communities and edit the ones they started.
+   Projects set up before this file existed only need to run this second script.
 3. From the project Connect dialog or API settings, copy the project URL and
    publishable key (the legacy anon key also works). Never use a secret or
    service-role key in Flutter or in GitHub build variables.
