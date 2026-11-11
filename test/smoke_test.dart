@@ -61,6 +61,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Communities'));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Crochet').first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Crochet').first);
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Join community'));

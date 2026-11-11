@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
-import '../../data/mock_data.dart';
+import '../../data/community_style.dart';
 import '../../models/hobby.dart';
 import '../../routing/routes.dart';
 import '../../state/community_store.dart';
@@ -15,10 +15,6 @@ void showError(BuildContext context, Object error) {
   );
 }
 
-Hobby hobbyFor(String id) => MockData.hobbies.firstWhere(
-  (h) => h.id == id,
-  orElse: () => MockData.hobbies.first,
-);
 
 // ---------------------------------------------------------------------------
 // Layout helpers
@@ -41,9 +37,25 @@ void selectTab(BuildContext context, int tab) {
 void openCommunity(BuildContext context, CommunityStore store, Hobby hobby) =>
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => CommunityPage(store: store, hobby: hobby),
+        builder: (_) => CommunityPage(store: store, hobbyId: hobby.id),
       ),
     );
+
+/// Opens the form to start a community, or to edit [editing].
+void openCommunityEditor(
+  BuildContext context,
+  CommunityStore store, {
+  Hobby? editing,
+  String initialName = '',
+}) => Navigator.of(context).push(
+  MaterialPageRoute<void>(
+    builder: (_) => CommunityEditor(
+      store: store,
+      editing: editing,
+      initialName: initialName,
+    ),
+  ),
+);
 
 void openPost(BuildContext context, CommunityStore store, RecordData post) =>
     Navigator.of(context).push(
@@ -658,7 +670,7 @@ class SideBar extends StatelessWidget {
                         InkWell(
                           borderRadius: BorderRadius.circular(14),
                           onTap: () =>
-                              openCommunity(context, store, hobbyFor(id)),
+                              openCommunity(context, store, store.hobbyFor(id)),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
@@ -666,11 +678,11 @@ class SideBar extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                HobbyBadge(hobbyFor(id)),
+                                HobbyBadge(store.hobbyFor(id)),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    hobbyFor(id).name,
+                                    store.hobbyFor(id).name,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 14,
@@ -685,7 +697,15 @@ class SideBar extends StatelessWidget {
                     ],
                   ),
           ),
-          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => openCommunityEditor(context, store),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Start a community'),
+            ),
+          ),
+          const SizedBox(height: 8),
           FilledButton(
             style: pillStyle(
               background: AppColors.blush,
@@ -799,9 +819,9 @@ class _SideItem extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class CommunityPage extends StatelessWidget {
-  const CommunityPage({super.key, required this.store, required this.hobby});
+  const CommunityPage({super.key, required this.store, required this.hobbyId});
   final CommunityStore store;
-  final Hobby hobby;
+  final String hobbyId;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -811,7 +831,7 @@ class CommunityPage extends StatelessWidget {
       tab: 1,
       showNav: false,
       showHeader: false,
-      child: CommunityFeed(store: store, hobby: hobby),
+      child: CommunityFeed(store: store, hobby: store.hobbyFor(hobbyId)),
     ),
   );
 }
@@ -936,6 +956,15 @@ class _CommunityFeedState extends State<CommunityFeed> {
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
               const Spacer(),
+              if (store.canEdit(hobby.id)) ...[
+                SoftIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: 'Edit community',
+                  onPressed: () =>
+                      openCommunityEditor(context, store, editing: hobby),
+                ),
+                const SizedBox(width: 12),
+              ],
               HobbyBadge(hobby, size: 52, onPastel: true),
             ],
           ),
@@ -947,6 +976,16 @@ class _CommunityFeedState extends State<CommunityFeed> {
             runSpacing: 10,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              if (store.creatorOf(hobby.id) != null)
+                PillTag(
+                  store.creatorOf(hobby.id) == store.userId
+                      ? 'Started by you'
+                      : 'Started by ${store.author(store.creatorOf(hobby.id)!)}',
+                  color: AppColors.surface.withValues(alpha: 0.8),
+                  textColor: AppColors.ink,
+                  icon: Icons.eco_outlined,
+                  height: 30,
+                ),
               if (joined)
                 const PillTag(
                   'Joined',
@@ -1002,10 +1041,40 @@ class _CommunityFeedState extends State<CommunityFeed> {
 
   List<Widget> _communities(BuildContext context, bool wide) {
     final store = widget.store;
-    final hobbies = MockData.hobbies
+    final hobbies = store.hobbies
         .where((h) => h.name.toLowerCase().contains(_query.toLowerCase()))
         .toList();
+    final text = Theme.of(context).textTheme;
     return [
+      Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 10,
+        children: [
+          Text(
+            'Every community',
+            style: text.titleLarge?.copyWith(fontSize: wide ? 22 : 19),
+          ),
+          FilledButton(
+            style: pillStyle(
+              background: AppColors.blush,
+              foreground: AppColors.blushInk,
+              height: 42,
+            ),
+            onPressed: () => openCommunityEditor(context, store),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_rounded, size: 18),
+                SizedBox(width: 6),
+                Text('Start a community'),
+              ],
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
       TextField(
         decoration: const InputDecoration(
           hintText: 'Find a hobby community',
@@ -1015,7 +1084,32 @@ class _CommunityFeedState extends State<CommunityFeed> {
       ),
       const SizedBox(height: 18),
       if (hobbies.isEmpty)
-        const Text('No communities match that search.')
+        SoftCard(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'No communities match that search.',
+                style: text.bodyMedium?.copyWith(color: AppColors.inkMuted),
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                style: pillStyle(),
+                onPressed: () => openCommunityEditor(
+                  context,
+                  store,
+                  initialName: _query.trim(),
+                ),
+                child: Text(
+                  _query.trim().isEmpty
+                      ? 'Start a community'
+                      : 'Start "${_query.trim()}"',
+                ),
+              ),
+            ],
+          ),
+        )
       else
         LayoutBuilder(
           builder: (context, constraints) => GridView.builder(
@@ -1243,7 +1337,7 @@ class _Rail extends StatelessWidget {
     final started = store.posts
         .where((p) => p['author_id'] == store.userId)
         .length;
-    final suggestions = MockData.hobbies
+    final suggestions = store.hobbies
         .where((h) => !store.joined.contains(h.id))
         .take(3)
         .toList();
@@ -1375,7 +1469,7 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final hobby = hobbyFor('${post['hobby_id']}');
+    final hobby = store.hobbyFor('${post['hobby_id']}');
     final kind = '${post['kind']}';
     final (kindBg, kindFg) = kindColors(kind);
     final author = store.author(post['author_id']);
@@ -1555,14 +1649,14 @@ class _ComposePostState extends State<ComposePost> {
                   decoration: InputDecoration(
                     prefixIcon: Padding(
                       padding: const EdgeInsets.all(10),
-                      child: HobbyBadge(hobbyFor(_hobby), size: 28),
+                      child: HobbyBadge(widget.store.hobbyFor(_hobby), size: 28),
                     ),
                   ),
                   items: [
                     for (final id in widget.store.joined)
                       DropdownMenuItem(
                         value: id,
-                        child: Text(hobbyFor(id).name),
+                        child: Text(widget.store.hobbyFor(id).name),
                       ),
                   ],
                   onChanged: _busy
@@ -1974,8 +2068,8 @@ class _SocialProfileState extends State<SocialProfile> {
                 children: [
                   for (final id in store.joined)
                     _CommunityChip(
-                      hobby: hobbyFor(id),
-                      onTap: () => openCommunity(context, store, hobbyFor(id)),
+                      hobby: store.hobbyFor(id),
+                      onTap: () => openCommunity(context, store, store.hobbyFor(id)),
                     ),
                 ],
               ),
@@ -2026,6 +2120,346 @@ class _CommunityChip extends StatelessWidget {
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             ),
           ],
+        ),
+      ),
+    ),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Start / edit a community
+// ---------------------------------------------------------------------------
+
+class CommunityEditor extends StatefulWidget {
+  const CommunityEditor({
+    super.key,
+    required this.store,
+    this.editing,
+    this.initialName = '',
+  });
+  final CommunityStore store;
+
+  /// The community being edited, or null to start a new one.
+  final Hobby? editing;
+  final String initialName;
+
+  @override
+  State<CommunityEditor> createState() => _CommunityEditorState();
+}
+
+class _CommunityEditorState extends State<CommunityEditor> {
+  final _form = GlobalKey<FormState>();
+  late final TextEditingController _name, _tagline;
+  late String _icon;
+  late int _tint;
+  bool _busy = false;
+
+  bool get _editing => widget.editing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final row = _editing
+        ? widget.store.communityRow(widget.editing!.id)
+        : null;
+    _name = TextEditingController(
+      text: widget.editing?.name ?? widget.initialName,
+    );
+    _tagline = TextEditingController(text: widget.editing?.tagline ?? '');
+    final savedIcon = row?['icon'] as String?;
+    _icon = communityIcons.containsKey(savedIcon) ? savedIcon! : 'eco';
+    final savedTint = (row?['tint'] as num?)?.toInt();
+    _tint = communityTints.contains(savedTint)
+        ? savedTint!
+        : communityTints[widget.store.communities.length %
+              communityTints.length];
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _tagline.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_form.currentState!.validate()) return;
+    setState(() => _busy = true);
+    try {
+      if (_editing) {
+        await widget.store.updateCommunity(
+          widget.editing!.id,
+          name: _name.text,
+          tagline: _tagline.text,
+          icon: _icon,
+          tint: _tint,
+        );
+        if (mounted) {
+          showNote(context, 'Community updated');
+          Navigator.of(context).pop();
+        }
+      } else {
+        final hobby = await widget.store.createCommunity(
+          name: _name.text,
+          tagline: _tagline.text,
+          icon: _icon,
+          tint: _tint,
+        );
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (_) =>
+                  CommunityPage(store: widget.store, hobbyId: hobby.id),
+            ),
+          );
+        }
+      }
+    } on ArgumentError catch (e) {
+      if (mounted) showNote(context, '${e.message}');
+    } catch (e) {
+      if (mounted) showError(context, e);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final tint = communityTint(_tint);
+    final preview = Hobby(
+      id: 'preview',
+      name: _name.text.trim().isEmpty ? 'Your community' : _name.text.trim(),
+      tagline: _tagline.text.trim().isEmpty
+          ? 'A line about what you do together'
+          : _tagline.text.trim(),
+      icon: communityIcon(_icon),
+      tint: tint,
+      basics: const [],
+    );
+    Widget label(String value) => Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        value,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AppColors.inkMuted,
+        ),
+      ),
+    );
+
+    return AppFrame(
+      store: widget.store,
+      tab: 1,
+      showNav: false,
+      showHeader: false,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: Form(
+            key: _form,
+            child: ListView(
+              padding: pagePadding(context),
+              children: [
+                Row(
+                  children: [
+                    SoftIconButton(
+                      icon: Icons.arrow_back_rounded,
+                      tooltip: 'Back',
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                Text(
+                  _editing ? 'Edit community' : 'Start a community',
+                  style: text.headlineMedium,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _editing
+                      ? 'Changes show up for every member right away.'
+                      : 'Plant a corner for a hobby that is missing. You will be its first member.',
+                  style: text.bodyMedium?.copyWith(color: AppColors.inkMuted),
+                ),
+                const SizedBox(height: 22),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: 260,
+                    height: 130,
+                    child: ExcludeSemantics(
+                      child: HobbyTile(
+                        hobby: preview,
+                        joined: true,
+                        onTap: () {},
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 26),
+                TextFormField(
+                  controller: _name,
+                  maxLength: 40,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                  onChanged: (_) => setState(() {}),
+                  validator: (v) {
+                    final value = (v ?? '').trim();
+                    if (value.length < 2) return 'Use at least 2 characters';
+                    final taken = widget.store.hobbies.any(
+                      (h) =>
+                          h.id != widget.editing?.id &&
+                          h.name.toLowerCase() == value.toLowerCase(),
+                    );
+                    return taken ? 'That community already exists' : null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _tagline,
+                  maxLength: 80,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'Tagline',
+                    hintText: 'e.g. Brushes, paper, and happy accidents',
+                  ),
+                  onChanged: (_) => setState(() {}),
+                  validator: (v) =>
+                      (v ?? '').trim().isEmpty ? 'Add a short tagline' : null,
+                ),
+                const SizedBox(height: 18),
+                label('Icon'),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final entry in communityIcons.entries)
+                      _PickerCircle(
+                        semanticLabel: 'Icon: ${entry.key}',
+                        selected: entry.key == _icon,
+                        fill: entry.key == _icon
+                            ? pastel(tint, 0.4)
+                            : AppColors.surface,
+                        onTap: _busy
+                            ? null
+                            : () => setState(() => _icon = entry.key),
+                        child: Icon(
+                          entry.value,
+                          size: 22,
+                          color: entry.key == _icon
+                              ? deepen(tint)
+                              : AppColors.inkMuted,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                label('Colour'),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final (i, rgb) in communityTints.indexed)
+                      _PickerCircle(
+                        semanticLabel: 'Colour ${i + 1}',
+                        selected: rgb == _tint,
+                        fill: pastel(communityTint(rgb), 0.45),
+                        onTap: _busy ? null : () => setState(() => _tint = rgb),
+                        child: rgb == _tint
+                            ? Icon(
+                                Icons.check_rounded,
+                                size: 20,
+                                color: deepen(communityTint(rgb)),
+                              )
+                            : Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: communityTint(rgb),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                FilledButton(
+                  onPressed: _busy ? null : _submit,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _editing ? Icons.check_rounded : Icons.eco_outlined,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _busy
+                            ? 'One moment…'
+                            : _editing
+                            ? 'Save changes'
+                            : 'Create community',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PickerCircle extends StatelessWidget {
+  const _PickerCircle({
+    required this.semanticLabel,
+    required this.selected,
+    required this.fill,
+    required this.onTap,
+    required this.child,
+  });
+  final String semanticLabel;
+  final bool selected;
+  final Color fill;
+  final VoidCallback? onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: semanticLabel,
+    button: true,
+    selected: selected,
+    inMutuallyExclusiveGroup: true,
+    child: Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: selected ? AppColors.moss : Colors.transparent,
+          width: 2,
+        ),
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: AppDecor.raised(0.6),
+        ),
+        child: Material(
+          color: fill,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: SizedBox.square(
+              dimension: 44,
+              child: Center(child: child),
+            ),
+          ),
         ),
       ),
     ),
