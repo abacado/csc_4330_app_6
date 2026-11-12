@@ -10,6 +10,22 @@ import '../models/hobby.dart';
 
 typedef RecordData = Map<String, dynamic>;
 
+/// One page of a query, plus how many rows the whole query matches.
+typedef RowPage = ({List<RecordData> rows, int total});
+
+/// Reads a whole query that the server hands back in capped pages. [page] is
+/// given how many rows have been read so far and returns the next page.
+Future<List<RecordData>> fetchAllRows(
+  Future<RowPage> Function(int from) page,
+) async {
+  final rows = <RecordData>[];
+  while (true) {
+    final next = await page(rows.length);
+    rows.addAll(next.rows);
+    if (next.rows.isEmpty || rows.length >= next.total) return rows;
+  }
+}
+
 /// The social MVP's data boundary. Demo data never mixes with hosted data.
 class CommunityStore extends ChangeNotifier {
   CommunityStore({this.client, this.persistDemo = true});
@@ -214,28 +230,84 @@ class CommunityStore extends ChangeNotifier {
 
   Future<void> refresh() async {
     if (isCloud && signedIn) {
-      // Assign only after all reads succeed, preserving the last good screen.
-      final result = await Future.wait([
-        client!.from('profiles').select(),
-        client!
+      // The server caps how many rows one request returns, so every read is
+      // either bounded by what is on screen or paged until complete.
+      final db = client!;
+      final (postRows, membershipRows, hobbyRows) = await (
+        db
             .from('community_posts')
             .select()
             .order('created_at', ascending: false)
-            .limit(100),
-        client!.from('community_comments').select().order('created_at'),
-        client!.from('memberships').select().eq('user_id', userId!),
-        client!.from('hobbies').select().order('created_at'),
+            .limit(_postLimit),
+        db.from('memberships').select().eq('user_id', userId!),
+        fetchAllRows(
+          (from) => _page(
+            db.from('hobbies').select().order('created_at').order('id'),
+            from,
+          ),
+        ),
+      ).wait;
+      final newPosts = _rows(postRows);
+
+      // Only the replies to the posts that were loaded.
+      final postIds = [for (final p in newPosts) p['id']];
+      final newComments = postIds.isEmpty
+          ? <RecordData>[]
+          : await fetchAllRows(
+              (from) => _page(
+                db
+                    .from('community_comments')
+                    .select()
+                    .inFilter('post_id', postIds)
+                    .order('created_at')
+                    .order('id'),
+                from,
+              ),
+            );
+
+      // Only the people who appear on screen, asked for in URL-sized batches.
+      final people = <Object?>{
+        userId,
+        for (final p in newPosts) p['author_id'],
+        for (final c in newComments) c['author_id'],
+        for (final h in hobbyRows) h['created_by'],
+      }.nonNulls.toList();
+      final profilePages = await Future.wait([
+        for (var i = 0; i < people.length; i += _idBatch)
+          db
+              .from('profiles')
+              .select()
+              .inFilter(
+                'id',
+                people.sublist(i, (i + _idBatch).clamp(0, people.length)),
+              ),
       ]);
-      profiles = _rows(result[0]);
-      posts = _rows(result[1]);
-      comments = _rows(result[2]);
-      memberships = _rows(result[3]);
+
+      // Assign only after all reads succeed, preserving the last good screen.
+      profiles = [for (final page in profilePages) ..._rows(page)];
+      posts = newPosts;
+      comments = newComments;
+      memberships = _rows(membershipRows);
       final builtIn = {for (final h in MockData.hobbies) h.id};
-      communities = _rows(
-        result[4],
-      ).where((row) => !builtIn.contains(row['id'])).toList();
+      communities = hobbyRows
+          .where((row) => !builtIn.contains(row['id']))
+          .toList();
     }
     notifyListeners();
+  }
+
+  static const _postLimit = 100;
+  static const _pageSize = 1000;
+  static const _idBatch = 100;
+
+  Future<RowPage> _page(
+    PostgrestTransformBuilder<PostgrestList> query,
+    int from,
+  ) async {
+    final response = await query
+        .range(from, from + _pageSize - 1)
+        .count(CountOption.exact);
+    return (rows: _rows(response.data), total: response.count);
   }
 
   void _requireUser() {
@@ -316,7 +388,12 @@ class CommunityStore extends ChangeNotifier {
     if (body.trim().length > 2000) {
       throw ArgumentError('Keep replies under 2000 characters.');
     }
-    final post = posts.firstWhere((p) => p['id'] == postId);
+    final post = posts.firstWhere(
+      (p) => p['id'] == postId,
+      orElse: () => throw StateError(
+        'This post is no longer available. Refresh and try again.',
+      ),
+    );
     if (!joined.contains(post['hobby_id'])) {
       throw StateError('Join this community to reply.');
     }

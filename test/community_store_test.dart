@@ -2,6 +2,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:skill_sprout/state/community_store.dart';
 
 void main() {
+  group('fetchAllRows', () {
+    final all = [for (var i = 0; i < 5; i++) <String, dynamic>{'id': i}];
+
+    test('keeps asking until every row the server reports is read', () async {
+      final asked = <int>[];
+      final rows = await fetchAllRows((from) async {
+        asked.add(from);
+        // A server that never returns more than two rows at a time.
+        return (rows: all.skip(from).take(2).toList(), total: all.length);
+      });
+      expect(rows, all);
+      expect(asked, [0, 2, 4]);
+    });
+
+    test('makes one request when everything fits in a page', () async {
+      var calls = 0;
+      final rows = await fetchAllRows((from) async {
+        calls++;
+        return (rows: all, total: all.length);
+      });
+      expect(rows, all);
+      expect(calls, 1);
+    });
+
+    test('stops on an empty page even if the total is never reached', () async {
+      final rows = await fetchAllRows(
+        (from) async => (rows: all.skip(from).take(3).toList(), total: 99),
+      );
+      expect(rows, all);
+      expect(await fetchAllRows((_) async => (rows: <RecordData>[], total: 0)), isEmpty);
+    });
+  });
+
   test('membership gates publishing and replies; two identities share conversations', () async {
     final store = CommunityStore(persistDemo: false);
     addTearDown(store.dispose);

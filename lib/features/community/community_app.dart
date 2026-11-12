@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
@@ -6,15 +7,15 @@ import '../../data/community_style.dart';
 import '../../models/hobby.dart';
 import '../../routing/routes.dart';
 import '../../state/community_store.dart';
+import '../../state/error_text.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/soft.dart';
 
+/// Shows a member-friendly message; the raw error only goes to the log.
 void showError(BuildContext context, Object error) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Unable to complete this action. $error')),
-  );
+  developer.log('Action failed', name: 'skill_sprout', error: error);
+  showNote(context, friendlyError(error));
 }
-
 
 // ---------------------------------------------------------------------------
 // Layout helpers
@@ -2214,8 +2215,6 @@ class _CommunityEditorState extends State<CommunityEditor> {
           );
         }
       }
-    } on ArgumentError catch (e) {
-      if (mounted) showNote(context, '${e.message}');
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {
