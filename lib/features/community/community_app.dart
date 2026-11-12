@@ -1737,7 +1737,7 @@ class _PostDetailState extends State<PostDetail> {
     setState(() => _busy = true);
     try {
       await widget.store.reply(widget.post['id'], _reply.text);
-      _reply.clear();
+      if (mounted) _reply.clear();
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {
