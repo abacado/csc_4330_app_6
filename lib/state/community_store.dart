@@ -224,7 +224,8 @@ class CommunityStore extends ChangeNotifier {
             .limit(100),
         client!.from('community_comments').select().order('created_at'),
         client!.from('memberships').select().eq('user_id', userId!),
-        client!.from('hobbies').select().order('created_at'),
+        // The original schema has a name but no creation timestamp.
+        client!.from('hobbies').select().order('name'),
       ]);
       profiles = _rows(result[0]);
       posts = _rows(result[1]);

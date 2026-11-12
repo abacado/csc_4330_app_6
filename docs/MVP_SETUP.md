@@ -42,6 +42,8 @@ for reference but are not linked into the community MVP.
    Then run `supabase/migrations/202611110001_member_communities.sql` the same
    way, once. It lets members start communities and edit the ones they started.
    Projects set up before this file existed only need to run this second script.
+   Existing communities can load before that migration. Run it before members
+   start or edit their own communities in the connected app.
 3. From the project Connect dialog or API settings, copy the project URL and
    publishable key (the legacy anon key also works). Never use a secret or
    service-role key in Flutter or in GitHub build variables.
